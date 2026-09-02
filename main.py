@@ -223,19 +223,22 @@ def openVid(driver:webdriver.Chrome,vidid,vidtitle,download=False,watch=True):
         filename = sanitize_filename(f"{vidtitle}.mp4")
         os.makedirs(str(OUTPUT_DIR.resolve()), exist_ok=True)
         outPath = str(OUTPUT_DIR.resolve())+"/"+filename
-        src = driver.find_element(By.CSS_SELECTOR, "#my-video_html5_api").get_attribute("data-setup-lazy")
-        src = json.loads(src)["sources"]["src"]
-        #print(SETTINGS["ffmpegloc"],"\n",src,"\n",outPath)
-        cmd = [
-            SETTINGS["ffmpegloc"],
-            "-headers",
-            'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36\r\n',
-            "-i", src,
-            "-c", "copy",
-            "-bsf:a", "aac_adtstoasc",
-            outPath
-        ]
-        process = subprocess.Popen(cmd,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+        if Path(outPath).exists():
+            print(f"{filename}는 이미 존재하는 영상입니다. 다운로드를 스킵합니다.")
+        else:
+            src = driver.find_element(By.CSS_SELECTOR, "#my-video_html5_api").get_attribute("data-setup-lazy")
+            src = json.loads(src)["sources"]["src"]
+            #print(SETTINGS["ffmpegloc"],"\n",src,"\n",outPath)
+            cmd = [
+                SETTINGS["ffmpegloc"],
+                "-headers",
+                'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36\r\n',
+                "-i", src,
+                "-c", "copy",
+                "-bsf:a", "aac_adtstoasc",
+                outPath
+            ]
+            process = subprocess.Popen(cmd,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
         pass
         
     tme = driver.find_element(By.CSS_SELECTOR,"span.playtime").text
