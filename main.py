@@ -11,6 +11,8 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 OUTPUT_DIR = Path(__file__).resolve().parent / "downloads"
 SETTINGS:dict
 
+print("1.0.0v")
+
 def getSettings(file_path)->dict[str:str]:
     path = Path(file_path)
 
@@ -34,7 +36,7 @@ def getSettings(file_path)->dict[str:str]:
             data[a]=b
             pass
     kyz = data.keys()
-    if "id" in kyz and "pass" in kyz and data["id"]!=None and data["pass"]!=None:
+    if "id" in kyz and "pass" in kyz and data["id"]!="" and data["pass"]!="":
         return data
     def checkThis(key:str,typ:type=bool,default=False):
         if key not in kyz or type(data[key])!=typ:
@@ -182,7 +184,7 @@ def format_time(seconds):
     seconds = int(seconds) % 60
     return f"{minutes:02}:{seconds:02}"
 
-def progressTimer(duration, bar_width=40):
+def progressTimer(duration, bar_width=50):
     elapsed = 0
     while True:
         
@@ -212,6 +214,17 @@ def progressTimer(duration, bar_width=40):
     pass
 
 def openVid(driver:webdriver.Chrome,vidid,vidtitle,download=False,watch=True):
+    # search first so if theres no need it doesnt open the vid page
+    filename = sanitize_filename(f"{vidtitle}.mp4")
+    os.makedirs(str(OUTPUT_DIR.resolve()), exist_ok=True)
+    outPath = str(OUTPUT_DIR.resolve())+"/"+filename
+    if Path(outPath).exists():
+        print(f"- {filename}는 이미 존재하는 영상입니다. 다운로드를 스킵합니다.")
+        if watch == False:
+            return
+        download = False
+        pass
+    
     driver.execute_script(f"window.open('https://learn.inha.ac.kr/mod/vod/viewer.php?id={str(vidid)}', '_blank');")
     driver.switch_to.window(driver.window_handles[1])
     sleep(1)
@@ -219,26 +232,21 @@ def openVid(driver:webdriver.Chrome,vidid,vidtitle,download=False,watch=True):
         driver.switch_to.alert.dismiss()
     except:
         pass
+    process = None
     if download:
-        filename = sanitize_filename(f"{vidtitle}.mp4")
-        os.makedirs(str(OUTPUT_DIR.resolve()), exist_ok=True)
-        outPath = str(OUTPUT_DIR.resolve())+"/"+filename
-        if Path(outPath).exists():
-            print(f"{filename}는 이미 존재하는 영상입니다. 다운로드를 스킵합니다.")
-        else:
-            src = driver.find_element(By.CSS_SELECTOR, "#my-video_html5_api").get_attribute("data-setup-lazy")
-            src = json.loads(src)["sources"]["src"]
-            #print(SETTINGS["ffmpegloc"],"\n",src,"\n",outPath)
-            cmd = [
-                SETTINGS["ffmpegloc"],
-                "-headers",
-                'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36\r\n',
-                "-i", src,
-                "-c", "copy",
-                "-bsf:a", "aac_adtstoasc",
-                outPath
-            ]
-            process = subprocess.Popen(cmd,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+        src = driver.find_element(By.CSS_SELECTOR, "#my-video_html5_api").get_attribute("data-setup-lazy")
+        src = json.loads(src)["sources"]["src"]
+        #print(SETTINGS["ffmpegloc"],"\n",src,"\n",outPath)
+        cmd = [
+            SETTINGS["ffmpegloc"],
+            "-headers",
+            'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36\r\n',
+            "-i", src,
+            "-c", "copy",
+            "-bsf:a", "aac_adtstoasc",
+            outPath
+        ]
+        process = subprocess.Popen(cmd,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
         pass
         
     tme = driver.find_element(By.CSS_SELECTOR,"span.playtime").text
@@ -247,11 +255,11 @@ def openVid(driver:webdriver.Chrome,vidid,vidtitle,download=False,watch=True):
     if watch:
         driver.find_element(By.CSS_SELECTOR, "button.vjs-big-play-button").click()
         driver.find_element(By.CSS_SELECTOR, "button.vjs-mute-control.vjs-control.vjs-button.vjs-vol-3").click()
-        print(f"{watchtime//3600}:{(watchtime//60)%60:02d}:{watchtime%60:02d}")
+        #print(f"{watchtime//3600}:{(watchtime//60)%60:02d}:{watchtime%60:02d}")
         progressTimer(watchtime)
     driver.close()
     driver.switch_to.window(driver.window_handles[0])
-    if download:
+    if process != None:
         process.wait() # hoxy 다운 안끝났을수도
     return watchtime
 
