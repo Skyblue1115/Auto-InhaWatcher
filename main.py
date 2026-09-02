@@ -3,7 +3,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 from pathlib import Path
-from time import sleep
+from time import sleep,perf_counter
 from random import randrange
 import os;import subprocess;import re;import json;import sys
 
@@ -99,6 +99,7 @@ def getNplayTodayVids():
     print("download 세팅이 True로 되어있습니다. 이번 주차의 모든 영상을 자동 다운로드합니다.")
     
     print("이번 주차의 강의 검색중..")
+    st = perf_counter()
     toview = driver.find_elements(By.CSS_SELECTOR,"ul.my-course-lists.coursemos-layout-0 li div a")
     vidDatas = dict()
     tottime = 0
@@ -162,6 +163,7 @@ def getNplayTodayVids():
         driver.close()
         driver.switch_to.window(driver.window_handles[-1])
         pass
+    print(f"걸린시간 - {int((perf_counter()-st)*100)/100}s")
     #print(vidDatas)
     print("================================================================================")
     print(f"<{ju}주차>")
@@ -193,7 +195,7 @@ def getNplayTodayVids():
                 print(f"다운로드 - {vid['name']}")
                 openVid(driver,vid['id'],vid['name'],download=True,watch=False)
         pass
-    print(f"시청 완료! 걸린시간 - {tottime//3600}:{(tottime//60)%60:02d}:{tottime%60:02d}")
+    print(f"모든 영상 시청 완료! 걸린시간 - {tottime//3600}:{(tottime//60)%60:02d}:{tottime%60:02d}")
     return
 
 def sanitize_filename(name, max_length=100):
