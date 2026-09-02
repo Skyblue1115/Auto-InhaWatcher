@@ -12,11 +12,6 @@ OUTPUT_DIR = Path(__file__).resolve().parent / "downloads"
 SETTINGS:dict
 
 def getSettings(file_path)->dict[str:str]:
-    """
-    ### returns {"id":,"pass":}
-    - returns {"id":None,"pass":None} if none exists
-    """
-    
     path = Path(file_path)
 
     if not path.exists():
