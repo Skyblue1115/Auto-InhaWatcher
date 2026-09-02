@@ -5,22 +5,38 @@ from webdriver_manager.chrome import ChromeDriverManager
 from pathlib import Path
 from time import sleep
 from random import randrange
-import os;import subprocess;import re;import json
+import os;import subprocess;import re;import json;import sys
 
-SCRIPT_DIR = Path(__file__).resolve().parent
-OUTPUT_DIR = Path(__file__).resolve().parent / "downloads"
+SCRIPT_DIR:Path
+if getattr(sys, "frozen", False):
+    SCRIPT_DIR = Path(sys.executable).resolve().parent
+else:
+    SCRIPT_DIR = Path(__file__).resolve().parent
+OUTPUT_DIR = SCRIPT_DIR / "downloads"
 SETTINGS:dict
 
-print("1.0.0v")
+print("1.0.1v")
 
 def getSettings(file_path)->dict[str:str]:
     path = Path(file_path)
 
     if not path.exists():
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text("id=\npass=", encoding="utf-8") # 여기 바꾸기
-        print(f"로그인 정보 확인 안됨\n{file_path} 파일에\nid=<id>\npass=<pass>\n로 작성해주세요")
-        raise
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text("""// 아이디와 비번을 아래 적어주세요
+    id=
+    pass=
+    
+    // 웹창을 투명하게 합니다. True로 적으면 작동과정이 실시간으로 보입니다
+    visibleHeader=False
+    // 시청이 필요한 강의의 검사를 마치고 시청을 진행할지의 여부를 물어봅니다. True로 적으면 물어보지 않고 검사가 마치자마자 강의를 시청합니다
+    skipcheck=False
+    // True로 적으면 이번주차의 모든강의들을 다운로드합니다. ffmpeg의 위치를 따로 적어야합니다
+    download=False
+    ffmpegloc=/ffmpeg.exe
+    // True로 적으면 자동감지를 하지 않으며, 시청할 강의의 id를 묻습니다. 이를 입력하면 자동으로 시청합니다
+    manualInput=False""", encoding="utf-8")
+            print(f"로그인 정보 확인 안됨\n{file_path} 파일에\nid=<id>\npass=<pass>\n로 작성해주세요")
+            raise
 
     lines = path.read_text(encoding="utf-8").splitlines()
 
@@ -37,19 +53,22 @@ def getSettings(file_path)->dict[str:str]:
             pass
     kyz = data.keys()
     if "id" in kyz and "pass" in kyz and data["id"]!="" and data["pass"]!="":
+        def checkThis(key:str,typ:type=bool,default=False):
+            if key not in kyz or type(data[key])!=typ:
+                data[key] = default
+            pass
+        checkThis("skipcheck")
+        checkThis("download")
+        checkThis("manualInput")
+        checkThis("ffmpegloc",str,"ffmpeg")
+        checkThis("visibleHeader")
         return data
-    def checkThis(key:str,typ:type=bool,default=False):
-        if key not in kyz or type(data[key])!=typ:
-            data[key] = default
-        pass
-    checkThis("skipcheck")
-    checkThis("download")
-    checkThis("manualInput")
-    checkThis("ffmpegloc",str,"ffmpeg")
-    checkThis("visibleHeader")
     print(f"오류!\n{file_path} 파일에\nid:<id>\npass:<pass>\n로 작성해주세요")
     raise
-SETTINGS = getSettings(str((SCRIPT_DIR / "settings.txt").resolve()))
+try:
+    SETTINGS = getSettings(str((SCRIPT_DIR / "settings.txt").resolve()))
+except BaseException as e:
+    print("Error",e)
 
 def getNplayTodayVids():
     options = webdriver.ChromeOptions()
@@ -68,6 +87,8 @@ def getNplayTodayVids():
     print("로그인 완료")
     
     if SETTINGS["manualInput"]:
+        if SETTINGS["download"]:
+            print("download 세팅이 True로 되어있습니다. 시청할 영상들을 자동 다운로드합니다.")
         print("manualInput 세팅이 True로 되어있습니다.\n자동시청할 영상id들을 입력해주세요\n>",end="")
         tottime = 0
         for vidid in input().split():
@@ -75,6 +96,7 @@ def getNplayTodayVids():
             tottime+=tme
         print(f"시청 완료! 걸린시간 - {tottime//3600}:{(tottime//60)%60:02d}:{tottime%60:02d}")
         return
+    print("download 세팅이 True로 되어있습니다. 이번 주차의 모든 영상을 자동 다운로드합니다.")
     
     print("이번 주차의 강의 검색중..")
     toview = driver.find_elements(By.CSS_SELECTOR,"ul.my-course-lists.coursemos-layout-0 li div a")
@@ -184,7 +206,7 @@ def format_time(seconds):
     seconds = int(seconds) % 60
     return f"{minutes:02}:{seconds:02}"
 
-def progressTimer(duration, bar_width=50):
+def progressTimer(duration, bar_width=70):
     elapsed = 0
     while True:
         
@@ -263,5 +285,10 @@ def openVid(driver:webdriver.Chrome,vidid,vidtitle,download=False,watch=True):
         process.wait() # hoxy 다운 안끝났을수도
     return watchtime
 
-getNplayTodayVids()
-input("엔터 키를 눌러서 종료합니다.")
+if __name__ == "__main__":
+    try:
+        getNplayTodayVids()
+    except BaseException as e:
+        print("Error",e)
+    input("엔터 키를 눌러서 종료합니다.")
+    pass
