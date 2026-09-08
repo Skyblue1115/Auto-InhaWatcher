@@ -23,18 +23,18 @@ def getSettings(file_path)->dict[str:str]:
     if not path.exists():
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text("""// 아이디와 비번을 아래 적어주세요
-    id=
-    pass=
-    
-    // 웹창을 투명하게 합니다. True로 적으면 작동과정이 실시간으로 보입니다
-    visibleHeader=False
-    // 시청이 필요한 강의의 검사를 마치고 시청을 진행할지의 여부를 물어봅니다. True로 적으면 물어보지 않고 검사가 마치자마자 강의를 시청합니다
-    skipcheck=False
-    // True로 적으면 이번주차의 모든강의들을 다운로드합니다. ffmpeg의 위치를 따로 적어야합니다
-    download=False
-    ffmpegloc=/ffmpeg.exe
-    // True로 적으면 자동감지를 하지 않으며, 시청할 강의의 id를 묻습니다. 이를 입력하면 자동으로 시청합니다
-    manualInput=False""", encoding="utf-8")
+id=
+pass=
+
+// 웹창을 투명하게 합니다. True로 적으면 작동과정이 실시간으로 보입니다
+visibleHeader=False
+// 시청이 필요한 강의의 검사를 마치고 시청을 진행할지의 여부를 물어봅니다. True로 적으면 물어보지 않고 검사가 마치자마자 강의를 시청합니다
+skipcheck=False
+// True로 적으면 이번주차의 모든강의들을 다운로드합니다. ffmpeg의 위치를 따로 적어야합니다
+download=False
+ffmpegloc=/ffmpeg.exe
+// True로 적으면 자동감지를 하지 않으며, 시청할 강의의 id를 묻습니다. 이를 입력하면 자동으로 시청합니다
+manualInput=False""", encoding="utf-8")
             print(f"로그인 정보 확인 안됨\n{file_path} 파일에\nid=<id>\npass=<pass>\n로 작성해주세요")
             raise
 
