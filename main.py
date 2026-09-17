@@ -34,7 +34,9 @@ skipcheck=False
 download=False
 ffmpegloc=/ffmpeg.exe
 // True로 적으면 자동감지를 하지 않으며, 시청할 강의의 id를 묻습니다. 이를 입력하면 자동으로 시청합니다
-manualInput=False""", encoding="utf-8")
+manualInput=False
+// True로 적으면 프로그램을 시작할때 바꾸고 싶은 세팅을 묻습니다. 바로 enter을 누른다면 변화없이 진행합니다
+askSettings=True""", encoding="utf-8")
             print(f"로그인 정보 확인 안됨\n{file_path} 파일에\nid=<id>\npass=<pass>\n로 작성해주세요")
             raise
 
@@ -62,11 +64,26 @@ manualInput=False""", encoding="utf-8")
         checkThis("manualInput")
         checkThis("ffmpegloc",str,"ffmpeg")
         checkThis("visibleHeader")
+        checkThis("askSettings")
         return data
     print(f"오류!\n{file_path} 파일에\nid:<id>\npass:<pass>\n로 작성해주세요")
     raise
 try:
     SETTINGS = getSettings(str((SCRIPT_DIR / "settings.txt").resolve()))
+    if SETTINGS["askSettings"]:
+        while True:
+            print("Current Settings : "+' '.join(map(lambda x:f"{x[0]}:{x[1]}",[x for x in SETTINGS.items() if x[0] not in {"id","pass"}])))
+            inp = input("세팅을 입력하여 바꿉니다 바뀐 세팅은 저장되지 않습니다. 엔터를 눌러 계속 진행합니다 > ")
+            if inp == "":
+                break
+            if inp in SETTINGS.keys():
+                if type(SETTINGS[inp])!=bool:
+                    print("해당 세팅은 True/False 세팅이 아닙니다.")
+                else:
+                    SETTINGS[inp]^=True
+            else:
+                print(f"{inp}는 존재하지 않는 세팅입니다.")
+        pass
 except BaseException as e:
     print("Error",e)
 
@@ -125,7 +142,6 @@ def getNplayTodayVids():
         mains = driver.find_elements(By.CSS_SELECTOR,".table.table-bordered.user_progress_table tbody tr:has(> :nth-child(6)) >td:first-child")
         cumul = 1;dc = 0
         for main in mains:
-            print("ya")
             v = main.get_attribute("rowspan")
             if v == None:
                 v=1
