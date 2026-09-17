@@ -15,7 +15,7 @@ else:
 OUTPUT_DIR = SCRIPT_DIR / "downloads"
 SETTINGS:dict
 
-print("1.0.1v")
+print("1.0.2v")
 
 def getSettings(file_path)->dict[str:str]:
     path = Path(file_path)
@@ -125,13 +125,16 @@ def getNplayTodayVids():
         mains = driver.find_elements(By.CSS_SELECTOR,".table.table-bordered.user_progress_table tbody tr:has(> :nth-child(6)) >td:first-child")
         cumul = 1;dc = 0
         for main in mains:
-            if main.get_attribute("rowspan") == None:
-                break
+            print("ya")
+            v = main.get_attribute("rowspan")
+            if v == None:
+                v=1
             if int(main.text)==ju:
-                dc = int(main.get_attribute("rowspan"))
+                dc = int(v)
                 break
-            cumul += int(main.get_attribute("rowspan"))
+            cumul += int(v)
             pass
+        #print(dc,cumul,list(range(cumul,cumul+dc)))
         watchcheck = ", ".join([f".user_progress_table tbody tr:nth-child({i}):has(>:nth-child(6))>:nth-child(5),.user_progress_table tbody tr:nth-child({i}):not(:has(> :nth-child(5))) > :nth-child(4)" for i in range(cumul,cumul+dc)])
         watched = []
         if watchcheck != "":
@@ -287,6 +290,7 @@ def openVid(driver:webdriver.Chrome,vidid,vidtitle,download=False,watch=True):
         process.wait() # hoxy 다운 안끝났을수도
     return watchtime
 
+getNplayTodayVids()
 if __name__ == "__main__":
     try:
         getNplayTodayVids()
