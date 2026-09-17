@@ -129,7 +129,7 @@ def getNplayTodayVids():
             v = main.get_attribute("rowspan")
             if v == None:
                 v=1
-            if int(main.text)==ju:
+            elif int(main.text)==ju:
                 dc = int(v)
                 break
             cumul += int(v)
